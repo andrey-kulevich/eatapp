@@ -77,8 +77,8 @@ CREATE PROCEDURE getFavoritePlaces (IN _id INT)
 BEGIN
 	SELECT B.id, country, region, town, mail_index, street, house, apartment, place
 	FROM `favorite_places` A
-    LEFT JOIN `address` B ON A.address = B.id
-    WHERE user = _id;
+	LEFT JOIN `address` B ON A.address = B.id
+	WHERE user = _id;
 END $$
 DELIMITER ;
 
@@ -90,8 +90,8 @@ DELIMITER $$
 CREATE PROCEDURE getPersonalInvitationsList (IN _id INT)
 BEGIN
 	SELECT A.id, datetime, country, region, town, mail_index, street, 
-		   house, apartment, place, who_will_pay, message, 
-		   C.id AS inviting_person_id, C.name AS inviting_person, accepted
+	       house, apartment, place, who_will_pay, message, 
+	       C.id AS inviting_person_id, C.name AS inviting_person, accepted
 	FROM `invitation` A	
 	LEFT JOIN `address` B ON A.address = B.id
 	LEFT JOIN `user`    C ON A.inviting_person = C.id
@@ -147,18 +147,18 @@ CALL getInvitationsListByLocation("country", "Россия");
 --4.	Получать список заведений в зависимости от предпочтений пользователя
 DELIMITER $$
 CREATE PROCEDURE getPlacesListByLocationAndPreferences (IN _requestArea VARCHAR(10), 
-														IN _userLocation VARCHAR(30), 
-														IN _cuisin_nationality INT,
-														IN _interior INT)
+							IN _userLocation VARCHAR(30), 
+							IN _cuisin_nationality INT,
+							IN _interior INT)
 BEGIN
 	SELECT A.id, name, photo, country, region, town, mail_index, street, 
-		   house, apartment, cuisin_nationality, interior, tagline, other
+	   	house, apartment, cuisin_nationality, interior, tagline, other
 	FROM `address` A	
 	LEFT JOIN 
 		(SELECT * FROM `place` B 
 		 LEFT JOIN `cuisin_nationality` C ON B.cuisin_nationality = C.id
-	     LEFT JOIN `interior`    	    D ON B.interior = D.id) E
-    ON A.place = E.id
+	     	 LEFT JOIN `interior`           D ON B.interior = D.id) E
+	ON A.place = E.id
 	WHERE (cuisin_nationality = _cuisin_nationality AND interior = _interior AND
 		   ((_requestArea = "country" AND country = _userLocation) OR 
 		    (_requestArea = "region"  AND region  = _userLocation) OR

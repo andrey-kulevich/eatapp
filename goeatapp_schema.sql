@@ -129,9 +129,8 @@ CREATE TABLE `favorite_places` (
 CREATE TABLE `invitation` (
   `id` int NOT NULL AUTO_INCREMENT,
   `datetime` datetime NOT NULL,
-  `place` int NOT NULL,
+  `address` int NOT NULL,
   `who_will_pay` tinyint(4) DEFAULT NULL,
-  `preferences` int DEFAULT NULL,
   `message` varchar(200) NOT NULL,
   `inviting_person` int NOT NULL,
   `pecipient` int DEFAULT NULL,
@@ -139,7 +138,7 @@ CREATE TABLE `invitation` (
   PRIMARY KEY (`id`),
   FOREIGN KEY (`inviting_person`) REFERENCES `user` (`id`),
   FOREIGN KEY (`pecipient`)       REFERENCES `user` (`id`),
-  FOREIGN KEY (`place`)           REFERENCES `address` (`id`)
+  FOREIGN KEY (`address`)         REFERENCES `address` (`id`)
 );
 
 CREATE TABLE `message` (
@@ -151,6 +150,17 @@ CREATE TABLE `message` (
   PRIMARY KEY (`id`),
   FOREIGN KEY (`sender`)    REFERENCES `user` (`id`),
   FOREIGN KEY (`recipient`) REFERENCES `user` (`id`)
+);
+
+CREATE TABLE `place_reviews` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user` int NOT NULL,
+  `place` int NOT NULL,
+  `score` int NOT NULL,
+  `review` varchar(1000) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`user`)  REFERENCES `user` (`id`),
+  FOREIGN KEY (`place`) REFERENCES `place` (`id`)
 );
 
 INSERT INTO `role` (`id`, `value`) VALUES ('0', 'admin');
@@ -304,14 +314,18 @@ INSERT INTO `food_assortment` (`place`, `dish`) VALUES ('8', '10');
 INSERT INTO `food_assortment` (`place`, `dish`) VALUES ('5', '10');
 INSERT INTO `food_assortment` (`place`, `dish`) VALUES ('10', '4');
 
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '2', '0', '15', 'привет', '1', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2015-01-01 13:12:51', '1', '0', '9', 'пошли', '4', '0');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:20', '3', '1', '10', 'хавать', '2', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `pecipient`, `accepted`) VALUES ('2020-01-01 15:15:56', '4', '0', '11', 'бро', '7', '1', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '5', '0', '12', 'хей', '8', '0');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-09-01 23:15:56', '6', '1', '13', 'любое сообщение', '9', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '7', '0', '14', 'лалала', '2', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `pecipient`, `accepted`) VALUES ('2020-01-01 15:15:56', '8', '0', '8', '', '4', '10', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `pecipient`, `accepted`) VALUES ('2020-01-01 01:15:56', '9', '0', '16', '', '1', '10', '1');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '10', '1', '17', '', '2', '0');
-INSERT INTO `invitation` (`datetime`, `place`, `who_will_pay`, `preferences`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '1', '0', '18', 'сообщаю', '4', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '2', '0', 'привет', '1', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2015-01-01 13:12:51', '1', '0', 'пошли', '4', '0');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:20', '3', '1', 'хавать', '2', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `recipient`, `accepted`) VALUES ('2020-01-01 15:15:56', '4', '0', 'бро', '7', '1', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '5', '0', 'хей', '8', '0');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-09-01 23:15:56', '6', '1', 'любое сообщение', '9', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '7', '0', 'лалала', '2', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `recipient`, `accepted`) VALUES ('2020-01-01 15:15:56', '8', '0', '', '4', '10', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `recipient`, `accepted`) VALUES ('2020-01-01 01:15:56', '9', '0', '', '1', '10', '1');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '10', '1', '', '2', '0');
+INSERT INTO `invitation` (`datetime`, `address`, `who_will_pay`, `message`, `inviting_person`, `accepted`) VALUES ('2020-01-01 15:15:56', '1', '0', 'сообщаю', '4', '1');
+
+INSERT INTO `place_reviews` (`user`, `place`, `score`, `review`) VALUES (1, 1, 4, "ну нормас, сойдет забегаловка");
+INSERT INTO `place_reviews` (`user`, `place`, `score`, `review`) VALUES (2, 2, 1, "blabla");
+INSERT INTO `place_reviews` (`user`, `place`, `score`, `review`) VALUES (4, 3, 5, "ahaha");

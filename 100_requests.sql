@@ -1,3 +1,5 @@
+------------------------------ Запросы по функциональным требованиям -----------------------------
+
 --Транзакционные:
 
 --1.	Добавить пользователя
@@ -77,8 +79,8 @@ CREATE PROCEDURE getFavoritePlaces (IN _id INT)
 BEGIN
 	SELECT B.id, country, region, town, mail_index, street, house, apartment, place
 	FROM `favorite_places` A
-	LEFT JOIN `address` B ON A.address = B.id
-	WHERE user = _id;
+    LEFT JOIN `address` B ON A.address = B.id
+    WHERE user = _id;
 END $$
 DELIMITER ;
 
@@ -90,8 +92,8 @@ DELIMITER $$
 CREATE PROCEDURE getPersonalInvitationsList (IN _id INT)
 BEGIN
 	SELECT A.id, datetime, country, region, town, mail_index, street, 
-	       house, apartment, place, who_will_pay, message, 
-	       C.id AS inviting_person_id, C.name AS inviting_person, accepted
+		   house, apartment, place, who_will_pay, message, 
+		   C.id AS inviting_person_id, C.name AS inviting_person, accepted
 	FROM `invitation` A	
 	LEFT JOIN `address` B ON A.address = B.id
 	LEFT JOIN `user`    C ON A.inviting_person = C.id
@@ -147,19 +149,20 @@ CALL getInvitationsListByLocation("country", "Россия");
 --4.	Получать список заведений в зависимости от предпочтений пользователя
 DELIMITER $$
 CREATE PROCEDURE getPlacesListByLocationAndPreferences (IN _requestArea VARCHAR(10), 
-							IN _userLocation VARCHAR(30), 
-							IN _cuisin_nationality INT,
-							IN _interior INT)
+														IN _userLocation VARCHAR(30), 
+														IN _cuisine_nationality VARCHAR(30),
+														IN _interior VARCHAR(30))
 BEGIN
 	SELECT A.id, name, photo, country, region, town, mail_index, street, 
-	   	house, apartment, cuisin_nationality, interior, tagline, other
+		   house, apartment, cuisine_nationality, interior, tagline, other
 	FROM `address` A	
 	LEFT JOIN 
-		(SELECT * FROM `place` B 
-		 LEFT JOIN `cuisin_nationality` C ON B.cuisin_nationality = C.id
-	     	 LEFT JOIN `interior`           D ON B.interior = D.id) E
-	ON A.place = E.id
-	WHERE (cuisin_nationality = _cuisin_nationality AND interior = _interior AND
+		(SELECT B.id, name, photo, C.value AS cuisine_nationality, D.value AS interior, tagline, other 
+         FROM `place` B 
+		 LEFT JOIN `cuisine_nationality` C ON B.cuisine_nationality = C.id
+	     LEFT JOIN `interior`    	    D ON B.interior = D.id) E
+    ON A.place = E.id
+	WHERE (cuisine_nationality = _cuisine_nationality AND interior = _interior AND
 		   ((_requestArea = "country" AND country = _userLocation) OR 
 		    (_requestArea = "region"  AND region  = _userLocation) OR
 		    (_requestArea = "town"    AND town    = _userLocation) OR 
@@ -168,7 +171,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL getPlacesListByLocationAndPreferences("country", "Россия", 1, 1);
+CALL getPlacesListByLocationAndPreferences("town", "Угандийск", "японская", "ампир");
 
 
 --5.	Получить кол-во посещений заведения
@@ -177,3 +180,131 @@ SELECT COUNT(*) FROM `invitation` WHERE address = 1;
 
 --6.	Получить рейтинг заведения
 SELECT ROUND(AVG(score), 2) AS rating FROM `place_reviews`; 
+
+
+
+-------------------------------- Прочие запросы -----------------------------------
+
+-- SELECT 
+SELECT DISTINCT * FROM `message` WHERE sender = 1;
+SELECT * FROM `user` WHERE id = 1;
+SELECT * FROM `user` WHERE name = "Вася Пупкин" AND preferences = 9;
+SELECT * FROM `user` WHERE name = "Вася Пупкин" OR name = "Андрюха" AND preferences = 9;
+SELECT * FROM `user` WHERE gender = 1 OR role = 2;
+SELECT * FROM `user` WHERE NOT gender = 0;
+SELECT name FROM `user` WHERE login = "god";
+SELECT * FROM `user` WHERE gender IN (1,4);
+SELECT * FROM `address` WHERE town IN ("Волгоград","Вашингтон","Берлин");
+SELECT * FROM `preferences` WHERE id BETWEEN 3 AND 9;
+SELECT * FROM `place_reviews` WHERE score BETWEEN 4 AND 5;
+SELECT name AS "имя" FROM `user` WHERE id = 1;
+SELECT * FROM `preferences` WHERE best_dessert IS NULL;
+SELECT * FROM `user` WHERE avatar IS NOT NULL;
+SELECT age AS vozrast FROM `user`;
+
+-- LIKE
+SELECT * FROM `address` WHERE region LIKE '%область%';
+SELECT * FROM `address` WHERE country LIKE '%ия';
+SELECT * FROM `address` WHERE country LIKE '___';
+SELECT * FROM `message` WHERE content LIKE '% % % % % %';
+SELECT * FROM `address` WHERE country LIKE '_a_%';
+
+-- COUNT, MAX, MIN, SUM, AVG
+SELECT COUNT(*) FROM `preferences` WHERE is_vegan = 1;
+SELECT AVG(score) AS rating FROM `place_reviews`; 
+SELECT MAX(tips_percentage) FROM `preferences`;
+SELECT MIN(id) FROM `preferences`;
+SELECT SUM(*) FROM `message` WHERE sender = 1;
+
+-- GROUP BY, HAVING
+SELECT name, gender, SUM(age) AS sum_age FROM user GROUP BY gender;
+SELECT place, MAX(dish) AS max_dish FROM food_assortment GROUP BY place;
+SELECT who_will_pay, MIN(accepted) FROM invitation GROUP BY who_will_pay;
+SELECT name, gender, SUM(age) AS sum_age FROM user GROUP BY gender HAVING SUM(age) > 25;
+SELECT place, MAX(dish) AS max_dish FROM food_assortment GROUP BY place HAVING MAX(dish) < 5;
+
+-- ORDER BY, ASC|DESC
+SELECT * FROM `user` ORDER BY name;
+SELECT * FROM `user` ORDER BY name DESC;
+SELECT * FROM `invitation` ORDER BY datetime;
+SELECT * FROM `invitation` ORDER BY datetime DESC;
+SELECT * FROM `message` ORDER BY sender;
+
+-- Вложенные SELECT
+SELECT * FROM (SELECT * FROM `user`) AS T WHERE id = 1;
+SELECT country FROM (SELECT * FROM (SELECT * FROM `address`) AS T) AS T;
+
+-- SELECT INTO
+SELECT * INTO newtable FROM user;
+SELECT town INTO newtable FROM address WHERE house = 28;
+
+-- UNION
+SELECT name FROM user UNION SELECT age FROM user;
+
+-- UPDATE 
+UPDATE `invitation` SET accepted = true WHERE id = 13;
+UPDATE `user` SET gender = 0 WHERE id = 7;
+UPDATE `user` SET age = 7 WHERE id = 1 AND preferences = 9;
+UPDATE `message` SET datetime = '2020-10-10 23:13:13', recipient = 4 WHERE id = 1;
+UPDATE `message` SET content = "ыыыы привет" WHERE id = 1;
+
+-- INSERT SELECT 
+INSERT INTO `place_reviews` (user, place, score, review) 
+SELECT user, place, score, review FROM `place_reviews` WHERE id = 1;
+
+-- JOIN
+SELECT name, value FROM `user` A JOIN `role` B ON A.role = B.id;
+
+SELECT name, value FROM `user` A INNER JOIN `gender` B ON A.gender = B.id;
+
+SELECT A.id, datetime, country, region, town, mail_index, street, 
+		   house, apartment, place, who_will_pay, message, 
+		   C.id AS inviting_person_id, C.name AS inviting_person, accepted
+	FROM `invitation` A	
+	LEFT JOIN `address` B ON A.address = B.id
+	LEFT JOIN `user`    C ON A.inviting_person = C.id;
+
+SELECT name, status, tips_percentage FROM `user` A LEFT JOIN `preferences` B ON A.preferences = B.id
+UNION
+SELECT name, status, tips_percentage FROM `user` A RIGHT JOIN `preferences` B ON A.preferences = B.id;
+
+SELECT B.id, country, region, town, mail_index, street, house, apartment, place
+	FROM `favorite_places` A
+    LEFT JOIN `address` B ON A.address = B.id;
+	
+SELECT A.id, datetime, country, region, town, mail_index, street, 
+		   house, apartment, place, who_will_pay, message, 
+		   C.id AS recipient_id, C.name AS recipient, accepted
+	FROM `invitation` A	
+	LEFT JOIN `address` B ON A.address = B.id
+	LEFT JOIN `user`    C ON A.recipient = C.id;
+	
+SELECT name, avatar FROM `user` A
+	RIGHT JOIN (SELECT DISTINCT recipient FROM `message` WHERE sender = 1) B
+	ON A.id = B.recipient;
+	
+SELECT B.name, C.name FROM `food_assortment` A 
+	LEFT JOIN `place` B ON A.place = B.id
+	LEFT JOIN `dish` C ON A.dish = C.id;
+	
+SELECT name, status, tips_percentage FROM `user` A LEFT OUTER JOIN `preferences` B ON A.preferences = B.id;
+
+SELECT datetime, content, name FROM `message` CROSS JOIN `user`;
+
+SELECT name, address FROM `favorite_places` CROSS JOIN `user`;
+	
+SELECT datetime, content, name FROM `message` NATURAL JOIN `user`;
+
+SELECT place, name FROM `food_assortment` NATURAL JOIN `dish`;
+
+SELECT name, dish FROM `food_assortment` NATURAL JOIN `place`;
+
+SELECT A.name, B.value, C.value FROM `place` A 
+	RIGHT JOIN `cuisine_nationality` B ON A.cuisine_nationality = B.id
+	LEFT JOIN `interior` C ON A.interior = C.id;
+	
+SELECT A.id, B.name, C.name FROM `preferences` A 
+	LEFT JOIN `dish` B ON A.best_dessert = B.id
+	LEFT JOIN `dish` C ON A.best_drink = C.id;
+	
+SELECT content, B.name FROM `message` A RIGHT JOIN `user` B ON A.sender = B.id;
